@@ -20,6 +20,14 @@ export const handler = async (event) => {
   console.log("Event:", JSON.stringify(event));
 
   try {
+    if (event.httpMethod === "OPTIONS") {
+      return {
+        statusCode: 204,
+        headers: corsHeaders,
+        body: ""
+      };
+    }
+
     const body = JSON.parse(event.body || "{}");
     const { username, password } = body;
 

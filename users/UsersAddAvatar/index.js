@@ -101,6 +101,11 @@ exports.handler = async (event) => {
     };
     avatars.push(newAvatar);
 
+    // Only auto-activate if it's the first avatar, no active avatar is set, or active avatar no longer exists
+    const activeExists = avatars.some(a => a.avatarId === userItem.activeAvatarId);
+    const shouldActivate = avatars.length === 1 || !userItem.activeAvatarId || !activeExists;
+    const activeAvatarId = shouldActivate ? newAvatar.avatarId : userItem.activeAvatarId;
+
     await docClient.send(
       new UpdateCommand({
         TableName: "CMS-Users",
@@ -108,7 +113,7 @@ exports.handler = async (event) => {
         UpdateExpression: "SET avatars = :avatars, activeAvatarId = :active, updatedAt = :now",
         ExpressionAttributeValues: {
           ":avatars": avatars,
-          ":active": newAvatar.avatarId,
+          ":active": activeAvatarId,
           ":now": new Date().toISOString(),
         },
       }),
@@ -117,7 +122,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       headers: corsHeaders,
-      body: JSON.stringify({ avatar: newAvatar, activeAvatarId: newAvatar.avatarId }),
+      body: JSON.stringify({ avatar: newAvatar, activeAvatarId }),
     };
   } catch (error) {
     console.error("Error:", error);
